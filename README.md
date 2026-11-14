@@ -5,6 +5,7 @@ Static source of truth for the Harrogate Philosophical Society blog.
 - **Live:** https://blog.acqrs.co.uk
 - **Hosting:** Cloudflare Worker `blog-acqrs` — Workers static assets, account `42b2d98d9a78704a355c9a4f930c6065`, zone `acqrs.co.uk` (`466bda6631f7575f444110ad352c2fae`)
 - **Deploy:** push to `main` → GitHub Actions runs `wrangler deploy` → assets upload → live
+  (verified: CI also smoke-tests the live hostname after deploying)
 
 `site/` is the whole website. Everything else is tooling.
 
@@ -30,9 +31,16 @@ It needs one repository secret:
 
 | secret | value |
 | --- | --- |
-| `CLOUDFLARE_API_TOKEN` | API token with **Account → Workers Scripts → Edit** for `Mttypl@gmail.com's Account` |
+| `CLOUDFLARE_API_KEY` (or `CLOUDFLARE_API_TOKEN`) | API token with **Account → Workers Scripts → Edit** for `Mttypl@gmail.com's Account` |
 
-Without it the job fails fast with an explicit message — nothing silently skips the deploy.
+The workflow accepts either name (`secrets.CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_KEY`).
+Without one it fails fast with an explicit message — nothing silently skips the deploy.
+
+`wrangler.toml` pins `html_handling = "drop-trailing-slash"` and `workers_dev = false` /
+`preview_urls = false`. Do not change those: the first CI deploy with the default
+`auto-trailing-slash` 307'd every internal link, and the first deploy also published a public
+`blog-acqrs.<account>.workers.dev` copy until `workers_dev = false` landed. The smoke test now
+asserts `/about` is 200, `/about/` is a 307 to `/about`, and a bogus path is 404.
 
 Local deploy, with such a token:
 

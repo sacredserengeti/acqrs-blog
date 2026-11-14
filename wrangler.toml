@@ -1,12 +1,19 @@
 name = "blog-acqrs"
 compatibility_date = "2026-11-14"
 
+# Don't publish the site on blog-acqrs.<account>.workers.dev — the public
+# hostname is the custom domain below.
+workers_dev = false
+preview_urls = false
+
 # Static site: every file in ./site is uploaded as a Workers static asset.
 # Deployed as an assets-only script (no main module) so unmatched paths serve
-# 404.html with a real 404 status. `npx wrangler deploy` works if
-# CLOUDFLARE_API_TOKEN has Workers Scripts:Edit; see README.md for the
-# API-only deploy path used with the MCP credentials.
+# 404.html with a real 404 status.
+#
+# html_handling must stay "drop-trailing-slash": the site's canonical URLs have
+# no trailing slash (/about), matching the original Bludit permalinks and every
+# internal link in the HTML. "auto-trailing-slash" would 307 every page.
 [assets]
 directory = "./site"
-html_handling = "auto-trailing-slash"
+html_handling = "drop-trailing-slash"
 not_found_handling = "404-page"

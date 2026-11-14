@@ -1,0 +1,12 @@
+name = "blog-acqrs"
+compatibility_date = "2026-11-14"
+
+# Static site: every file in ./site is uploaded as a Workers static asset.
+# Deployed as an assets-only script (no main module) so unmatched paths serve
+# 404.html with a real 404 status. `npx wrangler deploy` works if
+# CLOUDFLARE_API_TOKEN has Workers Scripts:Edit; see README.md for the
+# API-only deploy path used with the MCP credentials.
+[assets]
+directory = "./site"
+html_handling = "auto-trailing-slash"
+not_found_handling = "404-page"

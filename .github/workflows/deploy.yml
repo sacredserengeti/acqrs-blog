@@ -1,0 +1,61 @@
+name: Deploy to Cloudflare
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CLOUDFLARE_ACCOUNT_ID: 42b2d98d9a78704a355c9a4f930c6065
+  SITE_URL: https://blog.acqrs.co.uk
+
+jobs:
+  deploy:
+    name: wrangler deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Require Cloudflare API token
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CF_TOKEN" ]; then
+            echo "::error::Repository secret CLOUDFLARE_API_TOKEN is not set, so nothing can be deployed."
+            echo "Create a Cloudflare API token with the permission 'Account > Workers Scripts > Edit'"
+            echo "(account resources: Mttypl@gmail.com's Account) and add it under"
+            echo "Settings > Secrets and variables > Actions > New repository secret."
+            exit 1
+          fi
+
+      - name: Deploy static assets
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4.162.0"
+          command: deploy
+
+      - name: Smoke test
+        run: |
+          set -e
+          for path in / /about /dtsearch /sitemap.xml /bl-content/uploads/bltsearch.json; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' \
+              --retry 12 --retry-delay 5 --retry-all-errors \
+              "$SITE_URL$path")
+            echo "$path -> $code"
+            if [ "$code" != "200" ]; then
+              echo "::error::Smoke test failed: $SITE_URL$path returned $code"
+              exit 1
+            fi
+          done
+          missing=$(curl -s -o /dev/null -w '%{http_code}' "$SITE_URL/this-page-does-not-exist")
+          echo "/this-page-does-not-exist -> $missing (want 404)"
+          [ "$missing" = "404" ]

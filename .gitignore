@@ -1,0 +1,4 @@
+node_modules/
+mapping.json
+_index.json
+.wrangler/

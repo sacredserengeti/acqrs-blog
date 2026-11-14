@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://blog.acqrs.co.uk/sitemap.xml

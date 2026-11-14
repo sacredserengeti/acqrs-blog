@@ -59,6 +59,10 @@ jobs:
               exit 1
             fi
           done
+          trimmed=$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' "$SITE_URL/about/")
+          echo "/about/ -> $trimmed (want 307 to $SITE_URL/about)"
+          [ "$trimmed" = "307 $SITE_URL/about" ]
+
           missing=$(curl -s -o /dev/null -w '%{http_code}' "$SITE_URL/this-page-does-not-exist")
           echo "/this-page-does-not-exist -> $missing (want 404)"
           [ "$missing" = "404" ]
